@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: PLANA Hyperspace app shell (236px rail + header + tab bars) with the Insights
-   body switching between today's signal cards and a workflow board cut into priority rows. */
+   body shown as a workflow board cut into priority rows, or as a timeline of rows by seen date. */
 :root{
   color-scheme:dark;
   --bg:#0c0c0d; --bar:rgba(12,12,13,.95);
@@ -113,11 +113,6 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .hd h1{margin:0;font:400 20px/30px var(--font);letter-spacing:-.4px}
 .hd .counts{font-size:12px;color:var(--muted)} .hd .counts b{color:var(--fg);font-weight:600}
 .hd .sp{flex:1}
-.seg{display:flex;height:36px;border:1px solid var(--line);border-radius:7px;background:var(--surface);overflow:hidden}
-.seg button{display:flex;align-items:center;gap:7px;padding:0 12px;font-size:12.5px;font-weight:500;color:var(--muted)}
-.seg button+button{border-left:1px solid var(--line)}
-.seg button:hover{color:var(--fg)}
-.seg button[aria-pressed="true"]{background:rgba(229,98,3,.14);color:var(--amber)}
 .gear{width:36px;height:36px;border-radius:7px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
 .gear:hover{border-color:var(--line-2)}
 .legend{display:flex;justify-content:flex-end;gap:12px;font-size:11px;color:var(--dim);margin-top:10px;min-height:17px}
@@ -136,28 +131,14 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .notes:hover{color:var(--fg);border-color:var(--muted)}
 .notes svg.ic{width:12px;height:12px}
 
-/* ── Signal cards (current PLANA view) ── */
-.grp{margin-bottom:28px}
-.grp-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.grp-h h2{margin:0;font:700 11px/17px var(--font);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.grp-h h2.hot,.lane-critical .lane-name{background:linear-gradient(90deg,var(--coral),var(--orange));-webkit-background-clip:text;background-clip:text;color:transparent}
-.grp-h .n{font:800 12px/18px var(--font);color:var(--muted)}
-.grp-h i{flex:1;height:1px;background:linear-gradient(90deg,var(--line),rgba(0,0,0,0))}
-.sig{position:relative;border:1px dashed var(--line-2);border-radius:10px;padding:16px 18px;background:var(--card-bg);margin-bottom:36px;overflow:hidden}
-.sig.official{border-style:solid}
-.sig::before,.kc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--bar-c,transparent)}
-.p-critical{--bar-c:linear-gradient(#e50602,#e56203)} .p-high{--bar-c:var(--orange)} .p-medium{--bar-c:var(--amber)} .p-low{--bar-c:var(--line-2)} .p-none{--bar-c:transparent}
-.sig-top{display:flex;gap:12px;align-items:flex-start}
-.sig-t{flex:1;min-width:0;display:flex;gap:8px;align-items:flex-start}
+/* ── Card pieces shared by the board and the edit dialog ── */
+.kc::before,.lr::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--bar-c,transparent)}
+.p-critical{--bar-c:linear-gradient(#e50602,#e56203)} .p-high{--bar-c:var(--orange)} .p-medium{--bar-c:var(--amber)} .p-low{--bar-c:var(--line-2)} .p-none{--bar-c:transparent} .p-pinned{--bar-c:var(--fg)}
 .type{flex:none;font:800 9px/22px var(--font);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-2);border-radius:2px;padding:0 6px}
-.sig-t .type{margin-top:8px}
-.sig-t h3{margin:0;font:700 clamp(19px,1.1vw + 10px,30px)/1.17 var(--font);letter-spacing:-.025em;text-wrap:balance}
-.acts{display:flex;gap:7px;flex:none}
 .btn{height:31px;padding:0 12px;border-radius:7px;border:1px solid var(--line-2);background:var(--surface);font-size:13.5px;white-space:nowrap}
 .btn:hover:not(:disabled){border-color:var(--muted)}
 .btn:disabled{color:var(--off);background:var(--surface-3);border-color:#38383c}
 .btn.dots{width:31px;padding:0;background:none;border-color:var(--line-3);color:var(--muted);letter-spacing:1px;text-align:center;font-weight:500}
-.sig p{margin:7px 0 0;max-width:640px;font-size:13.5px;line-height:21px;color:var(--muted)}
 .more{color:var(--orange);font-size:13.5px}
 .meta{display:flex;align-items:center;gap:8px;margin-top:24px;font-size:12px;color:var(--muted);min-height:24px;flex-wrap:wrap}
 .meta>svg.ic{width:14px;height:14px}
@@ -165,16 +146,136 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .pill svg.ic{width:13px;height:13px;stroke-width:2.4}
 .pill.low{background:none;color:var(--muted);border-color:var(--line-2)}
 .pill.none{background:none;color:var(--dim);border:1px dashed var(--line-2)}
-.sig-foot{display:flex;align-items:center;margin-top:8px}
-.sig-foot .det{flex:1;display:flex;justify-content:center;align-items:center;gap:5px;font-size:10.5px;letter-spacing:.12em;color:var(--dim);padding:2px 6px}
-.sig-foot .det:hover{color:var(--muted)}
-.sig-foot .det svg.ic{width:11px;height:11px}
-.sig-foot .det[aria-expanded="true"] svg.ic{transform:rotate(180deg)}
 .id{font:400 12px/16px var(--mono);letter-spacing:.1em;color:var(--dim)}
-.dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 20px;margin:12px 0 0;padding-top:12px;border-top:1px solid var(--line)}
-.dl dt{font:800 9.5px/14px var(--font);letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
-.dl dd{margin:2px 0 0;font-size:13px}
+.dd{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:168px;height:31px;padding:0 9px 0 12px;border:1px solid var(--line-2);border-radius:6px;background:rgba(229,98,3,.14);color:var(--amber);font-size:12.5px;font-weight:500;white-space:nowrap}
+.dd:hover{border-color:var(--muted)}
+.dd svg.ic{width:14px;height:14px}
+.dt{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px;font-size:12.5px}
+.dt-row{display:flex;gap:10px 20px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.dt-mem{display:flex;gap:6px 10px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:12px;min-width:0}
+.chan{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);border-radius:6px;padding:2px 9px;font-weight:700;font-size:11.5px;color:var(--fg);white-space:nowrap}
+.chan svg.ic{width:13px;height:13px}
+.dt-src{display:flex;gap:6px 12px;align-items:center;flex-wrap:wrap}
+.pct{font-weight:800;font-size:11px;color:var(--fg)}
+.src{color:var(--orange);font-size:12px;display:inline-flex;gap:5px;align-items:center} .src svg.ic{width:11px;height:11px}
+.dt-grid{display:grid;grid-template-columns:minmax(190px,1fr) 1.5fr 1.5fr;gap:16px 28px;padding-top:12px;border-top:1px solid var(--line)}
+.dt-grid h6,.modal h6,.modal .h6{margin:0 0 8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:800 9.5px/14px var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.dt-grid h6 svg.ic,.modal .h6 svg.ic,.modal h6 svg.ic{width:12px;height:12px}
+.dt-grid p{margin:0;font-size:13.5px;line-height:21px;color:var(--fg)}
+.edl{color:var(--amber);font-weight:700;font-size:10px;letter-spacing:.02em;text-transform:none}
+.edl:hover{text-decoration:underline}
+.raci{margin:0;display:grid;gap:6px}
+.raci>div{display:grid;grid-template-columns:18px 84px 1fr;gap:8px;align-items:center}
+.raci b{width:17px;height:17px;border:1px solid var(--line-2);border-radius:3px;display:grid;place-items:center;font-size:9px;font-weight:800}
+.raci dt{font-size:11px;color:var(--dim)} .raci dd{margin:0;font-size:13px;min-width:0}
+.dt-acts{display:flex;gap:6px;flex-wrap:wrap}
+.dt-kb{font-size:12px}
+.dt-kb .dt-row{flex-direction:column;align-items:stretch}
+.dt-kb .dt-grid{grid-template-columns:1fr;gap:12px}
+.dt-kb .dt-grid p{font-size:12px;line-height:17px}
+.dt-kb .raci>div{grid-template-columns:18px 1fr} .dt-kb .raci dt{display:none} .dt-kb .raci dd{font-size:12px}
+.dt-kb .dd{width:100%;min-width:0}
+.dt-kb .btn{height:28px;padding:0 10px;font-size:12px}
+@media (max-width:900px){.dt-grid{grid-template-columns:1fr}}
+.btn.hot{background:var(--orange);border-color:var(--orange-hi);font-weight:700}
+.btn.hot:disabled{background:var(--surface-3);border-color:#38383c;font-weight:400}
 .none-msg{border:1px dashed var(--line);border-radius:10px;padding:36px 16px;text-align:center;color:var(--dim);font-size:13px}
+
+.type.tdd{display:inline-flex;align-items:center;gap:3px;padding:0 4px 0 6px;cursor:pointer}
+.type.tdd:hover,.type.tdd[aria-expanded="true"]{border-color:var(--muted);color:var(--fg)}
+.type.tdd svg.ic{width:10px;height:10px;margin:0;stroke-width:2.4}
+.kindnote{border:1px dashed var(--line-2);border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:12.5px;color:var(--muted)}
+.pdd{display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 8px 0 10px;border:1px solid var(--line-2);border-radius:6px;background:var(--surface);font-size:12.5px;font-weight:600;white-space:nowrap}
+.pdd:hover{border-color:var(--muted)} .pdd svg.ic{width:13px;height:13px;color:var(--muted)}
+.lr-side .pdd{min-width:150px} .lr-side .pdd svg.ic{margin-left:auto}
+/* ── Manual signal creation ── */
+.newbtn{height:36px;display:inline-flex;align-items:center;gap:6px;font-size:13px} .newbtn svg.ic{width:14px;height:14px;stroke-width:2.4}
+.addc{display:flex;align-items:center;justify-content:center;gap:5px;min-height:26px;border:1px dashed var(--line);border-radius:7px;font-size:11px;color:var(--dim)}
+.addc svg.ic{width:12px;height:12px}
+.addc:hover,.addc:focus-visible{border-color:var(--orange);color:var(--amber);background:rgba(229,98,3,.08)}
+.addc.solo{flex:1;min-height:46px}
+.addc.solo svg.ic,.addc.solo .lbl-add{display:none}
+.addc.solo:hover svg.ic,.addc.solo:focus-visible svg.ic{display:block}
+.addc.solo:hover .lbl-add,.addc.solo:focus-visible .lbl-add{display:inline}
+.addc.solo:hover .lbl-none,.addc.solo:focus-visible .lbl-none{display:none}
+@media (hover:hover){.addc:not(.solo){opacity:0;transition:opacity .12s}.cell:hover .addc,.addc:focus-visible{opacity:1}}
+@media (hover:none){.addc.solo .lbl-none{display:none}.addc.solo .lbl-add{display:inline}.addc.solo svg.ic{display:block}}
+.modal small.err{color:var(--coral);font-style:normal}
+/* ── Dismissed tray ── */
+.tray{flex:none;margin-top:10px;border:1px solid var(--line);border-radius:10px;background:rgba(22,22,24,.92)}
+.tray-bar{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border-radius:10px;outline:1px dashed transparent;outline-offset:-1px}
+.tray-bar:hover{background:rgba(255,255,255,.04)}
+.tray-bar.over{outline-color:var(--orange);background:rgba(229,98,3,.12)}
+.tray-bar>svg.ic{width:14px;height:14px;color:var(--dim);transform:rotate(-90deg)} .tray.open .tray-bar>svg.ic{transform:none}
+.tray .lane-name{color:var(--muted)}
+.tray-list{max-height:190px;overflow:auto;padding:0 76px 8px 8px;display:flex;flex-direction:column;gap:4px}
+.tr{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:7px;border:1px solid #2a2a2d;font-size:12.5px}
+.tr b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.tr-m{color:var(--dim);font-size:11.5px;white-space:nowrap} .tr .btn{height:26px;font-size:12px}
+.dd.gone{background:var(--surface);color:var(--muted)} .lr.gone{opacity:.62}
+@media (max-width:760px){.tr-m{display:none}.tray-list{padding-right:8px}.tray{margin-bottom:64px}}
+/* ── View switch ── */
+.seg{display:flex;height:36px;border:1px solid var(--line);border-radius:7px;background:var(--surface);overflow:hidden}
+.seg button{display:flex;align-items:center;gap:7px;padding:0 12px;font-size:12.5px;font-weight:500;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button:hover{color:var(--fg)}
+.seg button[aria-pressed="true"]{background:rgba(229,98,3,.14);color:var(--amber)}
+.rchip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--orange);color:var(--amber);border-radius:100px;padding:1px 5px 1px 10px;line-height:18px;font-weight:600}
+.rchip button{display:grid;place-items:center;width:16px;height:16px;border-radius:50%}
+.rchip button:hover{background:rgba(229,98,3,.25)} .rchip svg.ic{width:11px;height:11px}
+
+/* ── Timeline list ── */
+.lv-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.lv-bar .sp{flex:1}
+.tbtn{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 11px;border:1px solid var(--line-2);border-radius:7px;background:var(--surface);font-size:12.5px;white-space:nowrap}
+.tbtn:hover{border-color:var(--muted)}
+.tbtn.on{border-color:var(--orange);color:var(--amber);background:rgba(229,98,3,.14)}
+.tbtn svg.ic{width:14px;height:14px}
+.lv{display:flex;flex-direction:column;gap:24px}
+.lr{position:relative;overflow:hidden;border:1px dashed var(--line-2);border-radius:10px;background:var(--card-bg);padding:12px 16px 12px 18px}
+.lr.official{border-style:solid}
+.lr-main{display:grid;grid-template-columns:70px minmax(0,1fr) auto auto;gap:10px 18px;align-items:start}
+.lr-date{display:flex;flex-direction:column;gap:2px;line-height:1.2}
+.lr-date b{font-size:14px;font-weight:700;white-space:nowrap}
+.lr-date small{font:400 11px var(--mono);color:var(--dim);letter-spacing:.08em}
+.lr-t{display:flex;align-items:flex-start;gap:8px} .lr-t>svg.ic{width:13px;height:13px;margin-top:5px}
+.lr h3{margin:0;font:700 16px/1.35 var(--font);letter-spacing:-.01em;min-width:0}
+.lr h3 button{font:inherit;letter-spacing:inherit;text-align:left}
+.lr h3 button:hover{text-decoration:underline;text-decoration-color:var(--orange)}
+.lr-body>p{margin:5px 0 0;font-size:13px;line-height:19px;color:var(--muted);max-width:780px}
+.lr-side{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.lr-side .dd{min-width:150px;height:28px}
+.lr-end{display:flex;flex-direction:column;align-items:flex-end;gap:9px;min-width:64px}
+.lr .det{display:flex;align-items:center;gap:4px;font-size:10px;letter-spacing:.1em;color:var(--dim)}
+.lr .det:hover{color:var(--muted)} .lr .det svg.ic{width:10px;height:10px}
+.lr .det[aria-expanded="true"] svg.ic{transform:rotate(180deg)}
+@media (max-width:900px){.lr-main{grid-template-columns:62px minmax(0,1fr)}.lr-side,.lr-end{grid-column:2;flex-direction:row;align-items:center;flex-wrap:wrap}}
+
+/* ── Date range picker ── */
+.scrim.top{z-index:30}
+.calm{position:absolute;z-index:31;top:50%;left:50%;transform:translate(-50%,-50%);width:min(640px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;background:#1a1a1c;border:1px solid var(--line-2);border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.6);padding:16px;display:flex;flex-direction:column;gap:14px}
+.cal-h{display:flex;align-items:center;gap:8px} .cal-h h2{margin:0;font:600 15px/1.3 var(--font);flex:1}
+.cal-pre{display:flex;gap:6px;flex-wrap:wrap}
+.cal-nav{display:flex;align-items:center;gap:8px}
+.cal-nav>button{flex:none;width:30px;height:30px;border-radius:7px;display:grid;place-items:center;color:var(--muted);border:1px solid var(--line)}
+.cal-nav>button:hover{color:var(--fg);border-color:var(--line-2)}
+.cal-months{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.cal-m h3{margin:0 0 8px;font:600 13px/1.3 var(--font);text-align:center}
+.cal-g{display:grid;grid-template-columns:repeat(7,1fr);row-gap:2px}
+.cal-g .wd{font:700 9.5px/1 var(--font);color:var(--dim);text-align:center;padding:5px 0;letter-spacing:.08em}
+.cd{position:relative;height:34px;display:grid;place-items:center;font-size:12.5px;border-radius:7px;font-variant-numeric:tabular-nums}
+.cd:hover{background:var(--surface-2)}
+.cd.in{background:rgba(229,98,3,.16);border-radius:0}
+.cd.a,.cd.b{background:var(--orange);color:#fff;font-weight:700}
+.cd.a{border-radius:7px 0 0 7px} .cd.b{border-radius:0 7px 7px 0} .cd.a.b{border-radius:7px}
+.cd.today{outline:1px solid var(--line-2);outline-offset:-1px}
+.cd.has::after{content:"";position:absolute;bottom:4px;width:4px;height:4px;border-radius:50%;background:var(--amber)}
+.cd.a.has::after,.cd.b.has::after{background:#fff}
+.cal-key{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
+.cal-key i{width:5px;height:5px;border-radius:50%;background:var(--amber)}
+.cal-f{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+.cal-f small{flex:1;min-width:180px;font-size:12px;color:var(--muted)}
+@media (max-width:600px){.cal-months{grid-template-columns:1fr}.cal-m+.cal-m{display:none}}
 
 /* ── Kanban ── */
 .kb-top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
@@ -194,7 +295,8 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .col-h h2{margin:0;font:700 10.5px/15px var(--font);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 .col-h .n{font:800 10px/15px var(--font);padding:3px 8px;border-radius:999px;border:1px solid var(--line);background:var(--surface-3);color:var(--muted);font-variant-numeric:tabular-nums}
 .lane{margin-top:6px}
-.lane-head{display:flex;padding:6px 0}
+.lane-head{display:flex;padding:6px 0;border-radius:8px;outline:1px dashed transparent;outline-offset:-1px;transition:background .12s,outline-color .12s}
+.lane-head.over{background:rgba(229,98,3,.12);outline-color:var(--orange)}
 .lane-toggle{position:sticky;left:0;display:flex;align-items:center;gap:9px;padding:5px 12px 5px 6px;border-radius:7px;max-width:100%}
 .lane-toggle:hover{background:rgba(255,255,255,.05)}
 .lane-toggle>svg.ic{width:14px;height:14px;color:var(--dim);transition:transform .15s}
@@ -202,6 +304,7 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .lane-dot{width:9px;height:9px;border-radius:2px;flex:none;background:var(--bar-c)}
 .p-low .lane-dot{background:var(--muted)} .p-none .lane-dot{background:none;border:1px dashed var(--dim)}
 .lane-name{font:700 11.5px/17px var(--font);letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
+.lane-pinned .lane-name{color:var(--fg)} .uprio{display:inline-flex;align-items:center;gap:5px;color:var(--muted)}
 .lane-high .lane-name{color:var(--orange)} .lane-medium .lane-name{color:var(--amber)} .lane-low .lane-name{color:var(--muted)} .lane-none .lane-name{color:var(--dim)}
 .lane-n{font:800 12px/18px var(--font);color:var(--muted);font-variant-numeric:tabular-nums}
 .lane-sev{font-size:11px;color:var(--dim);white-space:nowrap}
@@ -215,10 +318,19 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .kc.drag{opacity:.35}
 .kc-top{display:flex;align-items:center;gap:7px;color:var(--dim)}
 .kc-top .sp{flex:1}
-.kc-top svg.ic{width:13px;height:13px}
+.kc-top>svg.ic{width:13px;height:13px}
 .kc h3{margin:9px 0 0;font:700 14px/19px var(--font);letter-spacing:-.01em}
-.kc p{margin:6px 0 0;font-size:12px;line-height:17px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.kc footer{display:flex;justify-content:space-between;gap:8px;margin-top:11px;font-size:10px;color:var(--dim)}
+.kc>p{margin:6px 0 0;font-size:12px;line-height:17px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.kc footer{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:11px;font-size:10px;color:var(--dim)}
+.kc>p.full{display:block}
+.kc h3 button{font:inherit;letter-spacing:inherit;text-align:left;cursor:pointer}
+.kc h3 button:hover{text-decoration:underline;text-decoration-color:var(--orange)}
+.kc .meta{margin-top:10px;gap:6px;font-size:11px;min-height:0}
+.kc .det{display:flex;align-items:center;gap:4px;font-size:10px;letter-spacing:.1em;color:var(--dim)}
+.kc .det:hover{color:var(--muted)} .kc .det svg.ic{width:10px;height:10px}
+.kc .det[aria-expanded="true"] svg.ic{transform:rotate(180deg)}
+.kdots{width:22px;height:20px;border:1px solid var(--line-3);border-radius:5px;text-align:center;font-size:11px;letter-spacing:1px;color:var(--muted);line-height:16px}
+.kdots:hover{border-color:var(--muted);color:var(--fg)}
 .kc footer .id{font-size:10px}
 
 /* ── Floating bits ── */
@@ -239,7 +351,26 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .pop.note table{border-collapse:collapse;margin:6px 0 8px;width:100%}
 .pop.note td{padding:3px 0;border-bottom:1px solid var(--line)} .pop.note td:first-child{color:var(--fg);font-weight:600;padding-right:12px;white-space:nowrap}
 .pop.note p{margin:0 0 6px}
-.scrim{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:20}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:20}
+.modal{position:absolute;z-index:21;top:20px;bottom:20px;left:50%;transform:translateX(-50%);width:min(780px,calc(100% - 32px));display:flex;flex-direction:column;background:#1a1a1c;border:1px solid var(--line-2);border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden}
+.md-h,.md-acts{display:flex;align-items:center;gap:8px;padding:12px 16px 0} .md-h .sp,.md-acts .sp,.md-f .sp{flex:1}
+.md-body{flex:1;min-height:0;overflow-y:auto;padding:12px 16px 16px;display:flex;flex-direction:column;gap:14px}
+.md-title{width:100%;background:none;border:0;border-bottom:2px solid var(--orange);color:var(--fg);font:500 15px/1.4 var(--font);padding:6px 2px;outline:0}
+.modal .meta{margin-top:0}
+.modal .inl{display:inline-flex;align-items:center;gap:5px} .modal .inl svg.ic{width:12px;height:12px}
+.modal small{display:block;font-size:10.5px;font-style:italic;color:var(--dim);margin-top:5px}
+.modal textarea,.modal .raci input{width:100%;background:#141415;border:1px solid var(--line-2);border-radius:7px;color:var(--fg);font:400 13px/1.5 var(--font);padding:9px 11px;resize:vertical}
+.modal .raci input{padding:5px 8px}
+.modal textarea:focus,.modal .raci input:focus{outline:0;border-color:var(--orange)}
+.modal label{display:block}
+.md-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 0;border-block:1px solid var(--line)}
+.md-row h6{margin:0} .md-row small{font-style:normal}
+.md-mem{margin:0;font-size:12.5px;color:var(--muted)}
+.md-grid{display:grid;grid-template-columns:1fr 1.3fr 1.3fr;gap:16px;padding-top:14px;border-top:1px solid var(--line)}
+.md-f{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line)} .md-f small{margin:0;font-style:normal;flex:1;min-width:200px}
+.pophint{display:block;max-width:190px;margin-top:5px;padding:7px 8px 3px;border-top:1px solid var(--line);font-size:11px;line-height:15px;color:var(--dim)}
+.pop hr{border:0;border-top:1px solid var(--line);margin:5px 0}
+@media (max-width:760px){.md-grid{grid-template-columns:1fr}.modal{top:8px;bottom:8px}}
 .drawer{position:absolute;top:0;right:0;bottom:0;width:min(440px,100%);z-index:21;background:linear-gradient(#1d1d20,#161618);border-left:1px solid var(--line);padding:18px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;box-shadow:-24px 0 60px rgba(0,0,0,.5)}
 .dr-top{display:flex;align-items:center;gap:10px} .dr-top .sp{flex:1}
 .x{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;color:var(--muted)} .x:hover{background:var(--surface-2);color:var(--fg)}
@@ -262,7 +393,7 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
   .wrap{padding:16px 16px 72px;gap:12px;flex-direction:column}
   .app.kb .wrap{height:auto} .app.kb .body{height:auto;width:100%} .body{width:100%}
   .board{max-height:74vh}
-  .sig-top{flex-direction:column} .sync span{display:none}
+  .sync span{display:none}
   .kb-hint,.lane-sev{display:none}
   .fab{right:16px;bottom:16px}
 }
@@ -298,44 +429,40 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
     <div class="bar" role="tablist" aria-label="Workspace">
       <button class="tab line" data-act="stub" data-n="Chat">Chat</button>
       <button class="tab line on" aria-current="page">Insights</button>
-      <button class="tab line" data-act="stub" data-n="Calendar">Calendar</button>
+      <button class="tab line" data-act="stub" data-n="Engagements">Engagements</button>
+      <button class="tab line" data-act="stub" data-n="People">People</button>
     </div>
-    <div class="bar" aria-label="Insight types">
-      <button class="tab sub" data-act="stub" data-n="Issues">Issues <span class="badge hot">136</span></button>
-      <button class="tab sub" data-act="stub" data-n="Risks">Risks <span class="badge">30</span></button>
-      <button class="tab sub on" aria-current="true">Tasks <span class="badge">297</span></button>
-      <button class="tab sub" data-act="stub" data-n="Follow-ups">Follow-ups <span class="badge">109</span></button>
-      <button class="tab sub" data-act="stub" data-n="Decisions">Decisions <span class="badge">18</span></button>
-      <button class="tab sub" data-act="stub" data-n="Blockers">Blockers <span class="badge">9</span></button>
-      <button class="tab sub" data-act="stub" data-n="Changes">Changes <span class="badge">18</span></button>
-    </div>
+    <div class="bar" aria-label="Signal types" id="kinds"></div>
     <div class="scroll">
       <div class="wrap">
         <button class="filterbtn" id="filterbtn" data-act="filter" aria-label="Show Insights filters" aria-expanded="false"><svg class="ic"><use href="#i-filter"/></svg></button>
         <section class="body">
           <div class="hd">
-            <h1>Tasks</h1>
+            <h1 id="h1">Actions</h1>
             <span class="counts" id="counts"></span>
             <span class="sp"></span>
+            <button class="btn hot newbtn" data-act="new"><svg class="ic"><use href="#i-plus"/></svg>New signal</button>
             <div class="seg" role="group" aria-label="View">
-              <button data-act="view" data-v="cards" id="v-cards" aria-pressed="false"><svg class="ic"><use href="#i-cards"/></svg>Cards</button>
               <button data-act="view" data-v="kanban" id="v-kanban" aria-pressed="true"><svg class="ic"><use href="#i-kanban"/></svg>Kanban</button>
+              <button data-act="view" data-v="list" id="v-list" aria-pressed="false"><svg class="ic"><use href="#i-list"/></svg>Timeline</button>
             </div>
             <button class="gear" data-act="stub" data-n="Tune extraction" aria-label="Tune extraction"><svg class="ic"><use href="#i-gear"/></svg></button>
           </div>
           <div class="legend"><span><svg class="ic c-green"><use href="#i-verified"/></svg>Human verified</span><span><svg class="ic c-amber"><use href="#i-spark"/></svg>AI suggested</span></div>
-          <label class="search" id="search" hidden><svg class="ic"><use href="#i-filter"/></svg><input id="q" type="search" placeholder="Filter tasks by title, text or #id" autocomplete="off"></label>
+          <label class="search" id="search" hidden><svg class="ic"><use href="#i-filter"/></svg><input id="q" type="search" placeholder="Filter by title, text or #id" autocomplete="off"></label>
           <div class="active">
-            <span class="lb">Active:</span><span class="chip">View: Me</span><b id="inview"></b><span>—</span><span>grouping and pins unchanged</span>
+            <span class="lb">Active:</span><span class="chip">View: Me</span><b id="inview"></b><span>—</span><span>grouping and pins unchanged</span><span id="rchip"></span>
             <span class="sp"></span>
             <button class="notes" data-act="notes"><svg class="ic"><use href="#i-info"/></svg>Prototype notes</button>
           </div>
+          <div id="kindnote" class="kindnote" hidden></div>
           <div id="view" style="display:contents"></div>
         </section>
       </div>
     </div>
     <button class="fab" data-act="stub" data-n="Ask Hyperspace" aria-label="Ask Hyperspace"><svg class="ic"><use href="#i-chat"/></svg></button>
     <div id="layer"></div>
+    <div id="cal"></div>
   </main>
 </div>
 <div id="pop" class="pop" hidden></div>
@@ -371,6 +498,11 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 <symbol id="i-grip" viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" stroke-width="3"/></symbol>
 <symbol id="i-spark" viewBox="0 0 24 24"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.13-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.13a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.13 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.13a.5.5 0 0 1-.96 0z"/></symbol>
 <symbol id="i-verified" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/></symbol>
+<symbol id="i-video" viewBox="0 0 24 24"><path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+<symbol id="i-newest" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></symbol>
+<symbol id="i-oldest" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
 <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
 </defs></svg>
@@ -381,7 +513,6 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ic=(n,c)=>`<svg class="ic${c?" "+c:""}"><use href="#i-${n}"/></svg>`;
-const TOTAL=297;
 
 // Priority rows. Each one is derived from the severity axes PLANA already stores.
 const P=[
@@ -392,10 +523,49 @@ const P=[
  {k:"none",name:"No priority",sev:"No severity set",group:"No severity set"}
 ];
 const PM=Object.fromEntries(P.map(p=>[p.k,p]));
+// Board rows: Pinned sits above the priorities. A pinned record keeps its own priority underneath
+// and goes back to that row when it is unpinned.
+const LANES=[{k:"pinned",name:"Pinned",sev:"Any priority"},...P];
+const LM=Object.fromEntries(LANES.map(p=>[p.k,p]));
+const rowOf=t=>t.pinned?"pinned":t.p;
 // Workflow columns, same set and order as the Junkola board.
 const ST=[["ai","AI extracted"],["ack","Acknowledged"],["prog","In Progress"],["blocked","Blocked"],["review","In Review"],["handled","Handled"]];
 const SM=Object.fromEntries(ST);
 
+// Per-task detail captured from the live cards: members, channel, confidence %, source serial,
+// RACI (R, A, C, I), impact confidence + text, action confidence + text, full context.
+const D={
+17253:["Anthony Scout Underwood·Duc Huy Tran·Scout Underwood·Duc Huy Tran","Google Meet",9,"E-072026-2045-014-T","Scout","Scout","Vu","—",8,"Having a working demo will allow the team to understand the platform's value and provide better feedback during the offsite.",9,"Scout will contact Vu to finalize the platform revisions and ensure it is operational.",""],
+29665:["Mitch Amos·Scout Underwood·Vu Pham","Google Chat",95,"E-081226-0534-013-C","Vu","Vu","Scout","Mitch",90,"Users may experience stale data across workspace integrations if automated and manual synchronization jobs fail to initialize.",90,"Investigate backend sync worker logs to determine why the 20 sync jobs failed to start and deploy a fix.","On August 12, 2026, Scout Underwood posted a bug report in the Brain Bugs Google Chat space addressing Vu Pham. An attached screenshot indicated that when clicking the Sync Now button, four sync jobs started while 20 failed to start. This task tracks the necessary technical investigation and resolution of the sync startup failure."],
+44696:["Khushal Deshpande·Sally Nanyoung Oh·jacob@plana.aero·Scout Underwood","Google Meet",90,"E-101926-1700-062-T","Mitch","Duc","Khushal · Sally","Scout",90,"Consolidated release tracking will clarify authentic progress toward Systems Requirements Review and Preliminary Design Review.",90,"Mitch Amos will reconcile spreadsheet entries with actual signed documents in program folders.","During program metrics review, Mitch Amos demonstrated a Smartsheet dashboard translating engineering deliverables, noting seventy-one overdue items out of 163 total deliverables and significant negative float. Duc Huy Tran questioned nine items categorized as released, pointing out that current folders lack document traceability and proof of sign-off. Duc tasked Mitch with consolidating real release statuses backed by verified documentation."],
+17059:["Mitch Amos·Duc Huy Tran·Scout Underwood·bjk@plana.aero","Google Meet",9,"E-072726-2021-009-T","Scout","Duc","—","—",9,"The team will lack a unified view of the program schedule, making it impossible to track progress or identify critical path risks.",9,"Review and approve the initial Gantt chart once Scout completes the first pass.","Duc Huy Tran requested that Scout Underwood build an initial Gantt chart for the program. Even if the data is imperfect or based on assumptions, having a first pass is necessary to visualize the critical path and track progress."],
+26060:["Scout Underwood","Google Chat",92,"E-082826-0432-007-C","Scout","Scout","—","Duc",85,"Deeper QA testing will validate the new skill and surface any system defects before deployment.",88,"Monitor the overnight test execution and review results once testing completes.","On August 28, 2026, Scout Underwood posted in the AI General Google Chat space announcing the execution of a deeper QA test compared to the previous week. Scout built a dedicated skill for the procedure and shared an attached Google Document titled SKILL.md. This item is classified as an active task because Scout has initiated testing that will run overnight to evaluate the skill's capabilities and test coverage. Scout is tracking the run to review how the implementation performs. The recommended next step is for Scout Underwood to review the test outputs following the overnight run, assess the performance of the new skill, and document any identified defects or refinements."],
+17096:["Duc Huy Tran·Scout Underwood·Mitch Amos·Jeremy Thomas","Google Meet",95,"E-072426-1600-010-T","Scout","Duc","—","—",90,"Improved visibility and documentation across the company, bridging the gap between distributed teams.",90,"Finalize the AI system dashboard and roll it out to all employees.","Duc Huy Tran shared that leadership and the board are fully on board with the AI system. The objective is to achieve company-wide usage by August. This is considered a necessity for the company's operations and visibility, especially to bridge the gap between the US and Korean teams."],
+45519:["Scout Underwood·Vu Pham·jacob@plana.aero·Duc Huy Tran","Gmail",95,"E-110926-0854-021-E","Vu","Scout","Jacob · Duc","—",90,"Providing detailed technical and data governance clarity will allow leadership to make informed decisions regarding Hyperspace adoption and website infrastructure.",95,"Vu Pham drafts technical responses addressing the four questions on hosting, data retention, portability, and commercial dependency, and sends them to Scout Underwood.","On November 9, 2026, Scout Underwood forwarded an email inquiry from PLANA COO Jacob Cho directly to Vu Pham. Jacob raised four detailed questions regarding Hyperspace following a recent webinar: cloud hosting location and infrastructure account ownership, data ingestion and retention policies for proprietary engineering files, portability of AI workflows and agents, and vendor dependency and commercial overlap with Google Workspace Gemini. Scout designated Vu as the best person to address these matters. This item was classified as a task because Scout issued a direct work request to Vu requiring a technical response. The recommended next step is for Vu Pham to draft clear responses addressing each architectural point and submit them to Scout to facilitate upcoming website infrastructure planning."],
+39065:["comments-noreply@docs.google.com·Scout Underwood·Jeffrey Mattson·Duc Huy Tran","Gmail",95,"E-092926-1001-070-E","Jeffrey","Jeffrey","Scout","Duc",90,"Facilitates review and approval of the proposal.",95,"Send the email.","Jeffrey is preparing a summary email for Duc to review this week, incorporating the proposal ask and supporting materials."],
+17251:["Anthony Scout Underwood·Duc Huy Tran·Scout Underwood·Duc Huy Tran","Google Meet",9,"E-072026-2045-014-T","Scout","Duc","—","—",8,"Consolidating these plans will provide a clear, unified direction for the organization over the next year.",9,"Scout will draft the 3, 6, and 12-month roadmap for the AI projects.","Duc is asking all team members to prepare a 3, 6, and 12-month plan for their respective areas to be consolidated during the offsite. Scout needs to outline the deliverables required from the company for the AI projects, keeping in mind that more resources will be available in the next 3 to 6 months."],
+17547:["Scout Underwood·Duc Huy Tran·Jeremy Thomas·Mitch Amos","Gmail",95,"E-071726-1019-040-E","Mitch","Mitch","Duc","Scout · Jeremy",90,"Establishes baseline delivery milestones and structural alignment for the domestic program.",90,"Mitch Amos drafts the work package schedule and circulates it for management review.","Following the processing of call transcripts, Scout Underwood bundled action items and assigned Mitch Amos the responsibility to produce version one of the work package and project schedule for program tracking."],
+17923:["Duc Huy Tran·bjk@plana.aero·Jihoon Kim·jacob@plana.aero","Gmail",9,"E-062726-1123-002-E","Braden · Jihoon · Jacob · Sally · Dohyun","Braden","Mitch · Vu · Scout","Duc",9,"If the folders are not populated correctly, the AI evidence system will not have the necessary controlled documents to index, hindering retrieval and compliance tracking.",9,"WP leads should gather their current documentation, place it into the appropriate WIP or Released folders, and create placeholders for missing items.","As part of the new standardized document control, Duc Huy Tran introduced a specific Google Drive structure with folders for each work package and lifecycle states (WIP, In-Review, Released). He instructed each WP lead to fill their folders using the required document artifacts list in their WP section. Current items should go in Released, active drafts in WIP, and placeholders should be created for unstarted items. This will allow the AI team to ingest the documentation into the controlled, searchable evidence base."],
+20014:["Vu Pham·Scout Underwood·Duc Huy Tran·Thang","Google Chat",5,"E-050126-0223-001-C","Scout","Duc","Vu · Thang","—",4,"Delivers a comprehensive communication presentation to secure a large budget and educate an AI novice audience.",5,"Draft the 22-page presentation sketch and share it with Duc and Vu for feedback.","Duc Huy Tran provided detailed email feedback regarding a communication project and requested a comprehensive presentation. Scout Underwood confirmed he will create a 22-page rough sketch for an AI novice audience, get feedback from Duc and Vu, and then involve Thang for slide assistance."],
+44697:["Khushal Deshpande·Sally Nanyoung Oh·jacob@plana.aero·Scout Underwood","Google Meet",90,"E-101926-1700-062-T","Scout","Duc","Mitch","Jeremy",90,"Automated asset management will provide instantaneous search and verify released technical assets across all work packages.",95,"Scout Underwood will meet with Mitch Amos, chart the document ingestion flow, and build the integration into Hyperspace.","Addressing team frustrations over untraceable deliverables and manual spreadsheet synchronization, Duc Huy Tran requested an automated solution for document discoverability. Scout Underwood volunteered to build a digital asset management system integrated with Hyperspace and company knowledge indexing, scheduling a mapping session with Mitch Amos to replace manual spreadsheet pasting with automated traceability."],
+17063:["Mitch Amos·Duc Huy Tran·Scout Underwood·bjk@plana.aero","Google Meet",9,"E-072726-2021-009-T","Scout","Scout","Duc","—",9,"Rolling out an unrefined AI tool to the whole company could lead to distrust in the system if it provides inaccurate information.",9,"Encourage the small team to actively use and test the AI tool during the 30-day beta period.","Scout Underwood is leading the rollout of a new AI intelligence tool. The plan is to deploy it to a small internal team for a 30-day beta test to refine the prompts and ensure the AI's outputs are accurate and trustworthy before releasing it to the wider company."],
+44811:["comments-noreply@docs.google.com·Vu Pham·Scout Underwood","Gmail",90,"E-102126-1126-026-E","Scout","—","—","—",80,"Improved data quality during integration.",80,"Review the proposal and define implementation steps.","The team is beginning to integrate various data silos. Scout Underwood proposed an Agentic Human-in-the-Loop layer to manage data quality."],
+15555:["Duc Huy Tran·Vu Pham·Scout Underwood","Gmail",5,"E-081226-1605-022-E","Scout","Scout","Vu","Duc",5,"If the platform continues to selectively filter sources based on phrasing, users will miss important information during broad queries.",5,"Modify the platform's search routing logic to query all relevant sources when a user asks a broad question, rather than prematurely filtering by tool.","Duc Huy Tran observed that the platform's AI selectively chooses data sources (like calendar vs. workspace) based on the specific phrasing of a user's prompt. For instance, asking for a 'day by day' breakdown caused the system to only read transcripts and ignore emails, leading to missed information. Duc requested that for broad questions, the platform should search across all relevant sources before determining what is useful. Scout Underwood acknowledged the feedback and added the requested change to the task list."],
+17831:["Scout Underwood·Mitch Amos·Duc Huy Tran·Vu Pham","Gmail",5,"E-071426-2344-014-E","Scout · Vu","Scout","Mitch","Duc",5,"Observing a brand-new user interact with the app in person will provide valuable insights for improving the user experience.",5,"Scout and Vu should conduct the 15-minute over-the-shoulder observation with Mitch once he arrives.","Scout Underwood and Vu Pham are ready to test the first journey of the Company Brain platform, which involves the integration of PLANA Google services. Scout requested a 15-minute in-person session with Mitch Amos to film over his shoulder while he onboards, in order to identify any user experience issues. After some scheduling discussion, they agreed to meet at Chapman on Tuesday, July 14th at 4:45 PM, just before Mitch's meeting with Duc Huy Tran."],
+45363:["Scout Underwood","Google Chat",92,"E-110326-2209-027-C","—","Duc","Scout","—",85,"Providing timely feedback will help refine the document tracker prototype to align with actual operational workflows and prevent misaligned automation.",90,"Review the attached Document tracker demo.mp4 recording and respond to Scout Underwood with feedback on the proposed automation and workflow coverage.","On November 3, 2026, Scout Underwood posted a message in a Google Chat space sharing a video attachment titled Document tracker demo.mp4. Underwood explained that the prototype was modeled on the recipient's workflow to automate manual tasks and enhance traceability and awareness across the organization. This message was classified as a task because Underwood explicitly requested an evaluation of the prototype from the workflow owner. As a next step, the recipient or relevant workflow owner should review the video recording and provide constructive feedback on whether the prototype meets operational tracking and automation needs."],
+26081:["Scout Underwood·Jeremy Thomas·Mitch Amos·Duc Huy Tran","Gmail",90,"E-082626-1651-023-E","Scout · Vu","Scout","Duc","Jeremy · Mitch",85,"Initial testing will uncover usability issues and defects early, leading to better product stability.",85,"Deploy the platform release and establish an organized channel for logging team feedback.","On August 26, 2026, Scout Underwood emailed Jeremy Thomas, Mitch Amos, Duc Huy Tran, and Vu Pham to provide advance notice regarding the rollout of the company intelligence platform. Scout and Vu's team will manage the rollout in the coming days and encourage all team members to test features and submit feedback."],
+15529:["Duc Huy Tran·Vu Pham·Scout Underwood","Gmail",5,"E-081226-1716-025-E","Vu · Scout","Vu · Scout","Duc","—",4,"Users will continue to lose context between sessions, potentially reducing engagement and satisfaction with the platform.",5,"Log the feature request for persistent chat memory and prioritize it in the product backlog.","On August 12, 2026, Duc Huy Tran emailed Vu Pham and Scout Underwood with product feedback. He noted that the platform currently starts from scratch every time it is opened. He requested persistent memory for chats so that users can pick up where they left off the previous day, as he otherwise forgets the context. The recommended next step is to review this feature request and determine the technical requirements for implementing chat session persistence."]
+};
+// Dates. "Seen" dates on the cards carry no year; every one in this view is 2026.
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const TODAY="2026-11-12";
+const z=n=>String(n).padStart(2,"0");
+const iso=(y,m,d)=>`${y}-${z(m+1)}-${z(d)}`;
+const toISO=seen=>{const [m,d]=seen.split(" ");return iso(2026,MON.indexOf(m),+d)};
+const fmt=i=>{const [y,m,d]=i.split("-");return `${MON[m-1]} ${+d}, ${y}`};
+const shift=(i,days)=>{const [y,m,d]=i.split("-").map(Number),t=new Date(Date.UTC(y,m-1,d+days));return iso(t.getUTCFullYear(),t.getUTCMonth(),t.getUTCDate())};
+const inRange=(t,r)=>!r||(t.date>=r.from&&t.date<=r.to);
+const rangeLabel=r=>r.from===r.to?fmt(r.from):`${fmt(r.from)} – ${fmt(r.to)}`;
 // id, title, description, priority, status, seen, promote enabled, dismiss enabled
 const T=[
 [17253,"Ensure platform readiness and working demo","Scout needs to coordinate with Vu to check the platform's readiness level and ensure a small version is running by the end of the week for Mitch and Jeremy to use.","critical","ai","Jul 20",1,1],
@@ -418,11 +588,12 @@ const T=[
 [45363,"Review document tracker demo prototype","Scout Underwood requested feedback on a newly built document tracker prototype designed to automate workflow and improve traceability.","none","ai","Nov 3",0,1],
 [26081,"Roll out company intelligence platform and collect user feedback","Scout Underwood announced the upcoming rollout of the company platform within the next couple of days to facilitate team testing and feedback collection.","low","handled","Aug 26",1,1],
 [15529,"Evaluate Persistent Chat Memory","Duc Huy Tran requested that the platform retain chat history across sessions to prevent loss of context.","none","ai","Aug 12",1,1]
-].map(r=>({id:r[0],title:r[1],desc:r[2],p:r[3],s:r[4],seen:r[5],canP:!!r[6],canD:!!r[7],official:false,gone:false}));
-const byId=id=>T.find(t=>t.id===+id);
+].map(r=>{const d=D[r[0]];return {date:toISO(r[5]),id:r[0],title:r[1],desc:r[2],p:r[3],s:r[4],seen:r[5],canP:!!r[6],canD:!!r[7],pinned:false,kind:"action",official:false,edited:false,gone:false,mem:d[0].split("·"),chan:d[1],conf:d[2],serial:d[3],raci:d.slice(4,8),piC:d[8],pi:d[9],paC:d[10],pa:d[11],ctx:d[12]}});
+let DRAFT=null; // the unsaved record behind the "New signal" dialog
+const SAMPLE_N=T.length,ME="Scout Underwood";
+const byId=id=>+id===0?DRAFT:T.find(t=>t.id===+id);
 
-const S={view:"kanban",q:"",shut:{},open:{},sel:null,filter:false};
-const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const S={tray:false,showGone:false,kind:"action",view:"kanban",desc:true,range:null,cal:null,q:"",shut:{medium:true,low:true,none:true},open:{},more:{},edit:null,filter:false};
 
 /* ── Rail ── */
 const NAV=[
@@ -438,87 +609,167 @@ $("#nav").innerHTML=NAV.map(n=>{
 }).join("");
 
 /* ── Shared pieces ── */
-const visible=()=>{const q=S.q.trim().toLowerCase();return T.filter(t=>!t.gone&&(!q||(t.title+" "+t.desc+" #"+t.id).toLowerCase().includes(q)))};
-const mark=t=>t.official?ic("verified","c-green"):ic("spark","c-amber");
-function pill(t){
-  const p=PM[t.p];const cls=t.p==="low"?" low":t.p==="none"?" none":"";
-  return `<button class="pill${cls}" data-act="sev" data-id="${t.id}" aria-haspopup="true">${t.p==="none"?"Set severity":esc(p.sev)}${ic("down")}</button>`;
+const visible=()=>{const q=S.q.trim().toLowerCase();return T.filter(t=>!t.gone&&t.kind===S.kind&&inRange(t,S.range)&&(!q||(t.title+" "+t.desc+" #"+t.id).toLowerCase().includes(q)))};
+const mark=t=>t.official||t.edited||t.verified?ic("verified","c-green"):ic("spark","c-amber");
+// Signal types: key, badge label, tab label, total on the live workspace before any edits here.
+const KINDS=[["action","Action","Actions",297],["risk","Risk","Risks",30],["decision","Decision","Decisions",18]];
+const KM=Object.fromEntries(KINDS.map(k=>[k[0],k]));
+// Every sample record starts as an action, so a tab's count moves only when a record changes type or is dismissed.
+const kindTotal=k=>KM[k][3]+T.filter(t=>t.kind===k&&!t.gone).length-(k==="action"?SAMPLE_N:0);
+const typeDD=t=>`<button class="type tdd" data-act="kind" data-id="${t.id}" aria-haspopup="true" aria-label="Signal type: ${KM[t.kind][1]}. Change type">${KM[t.kind][1]}${ic("down")}</button>`;
+const CI={"Google Meet":"video","Gmail":"mail","Google Chat":"chat","Manual entry":"verified"};
+const RN=["Responsible","Accountable","Consulted","Informed"];
+const pct=n=>n==null?"":`<b class="pct">(${n}%)</b>`;
+const edl=t=>`<button class="edl" data-act="edit" data-id="${t.id}">(edit)</button>`;
+const stName=t=>t.gone?"Dismissed":SM[t.s];
+const statusDD=t=>`<button class="dd${t.gone?" gone":""}" data-act="status" data-id="${t.id}" aria-haspopup="true" aria-label="Workflow status: ${stName(t)}">${stName(t)}${ic("down")}</button>`;
+const pd=t=>`<button class="btn" data-act="promote" data-id="${t.id}" ${t.canP&&!t.official?"":"disabled"}>${t.official?"Promoted":"Promote"}</button><button class="btn" data-act="dismiss" data-id="${t.id}" ${t.canD?"":"disabled"}>Dismiss</button>`;
+// The expanded Details block. Same fields in both views; the Kanban variant stacks them.
+function detail(t,kb){
+  return `<div class="dt${kb?" dt-kb":""}">
+  <div class="dt-row"><div class="dt-mem"><span class="eyebrow">Members</span><span>${esc(t.mem.join(" · "))}</span><span class="chan">${ic(CI[t.chan]||"chat")}${esc(t.chan)}</span></div>${statusDD(t)}</div>
+  <div class="dt-src">${t.manual?`<span class="tr-m">Created manually by ${esc(t.mem[0])} · ${fmt(t.date)}</span>`:`${pct(t.conf)}<button class="src" data-act="stub" data-n="Open source">Open source ${ic("ext")}</button><span class="id">${t.serial}</span>`}</div>
+  <div class="dt-grid">
+    <div><h6>RACI ${mark(t)} ${edl(t)}</h6><dl class="raci">${RN.map((n,i)=>`<div><b>${n[0]}</b><dt>${n}</dt><dd>${esc(t.raci[i])}</dd></div>`).join("")}</dl></div>
+    <div><h6>Possible impact ${pct(t.piC)} ${mark(t)} ${edl(t)}</h6><p>${esc(t.pi||"—")}</p></div>
+    <div><h6>Possible action ${pct(t.paC)} ${mark(t)} ${edl(t)}</h6><p>${esc(t.pa||"—")}</p></div>
+  </div>
+</div>`;
+}
+const summary=t=>!t.desc&&!t.ctx?"":`<p${S.more[t.id]?' class="full"':""}>${esc(t.desc)}${S.more[t.id]&&t.ctx?`<br><br>${esc(t.ctx)}`:""} <button class="more" data-act="more" data-id="${t.id}">(${S.more[t.id]?"less":"more"})</button></p>`;
+// Priority drop-down for the places that have no rows to drag between: Timeline and the Edit dialog.
+const pill=t=>{const r=rowOf(t);return `<button class="pdd p-${r}" data-act="prio" data-id="${t.id}" aria-haspopup="true" aria-label="Row: ${LM[r].name}. Change"><i class="lane-dot"></i>${LM[r].name}${ic("down")}</button>`};
+
+/* ── Timeline view: one row per extraction, ordered by seen date ── */
+function listView(list){
+  const goneN=T.filter(t=>t.gone&&t.kind===S.kind).length;
+  if(S.showGone)list=list.concat(T.filter(t=>t.gone&&t.kind===S.kind&&inRange(t,S.range)));
+  const rows=[...list].sort((a,b)=>(a.date<b.date?-1:a.date>b.date?1:a.id-b.id)*(S.desc?-1:1));
+  let h=`<div class="lv-bar"><span class="eyebrow">Insight extractions by date</span><span class="sp"></span>
+<button class="tbtn${S.showGone?" on":""}" data-act="showgone" aria-pressed="${S.showGone}">${S.showGone?"Hide":"Show"} dismissed (${goneN})</button>
+<button class="tbtn" data-act="sort" aria-label="Sorted ${S.desc?"newest":"oldest"} first. Switch to ${S.desc?"oldest":"newest"} first">${ic(S.desc?"newest":"oldest")}${S.desc?"Newest first":"Oldest first"}</button>
+<button class="tbtn${S.range?" on":""}" data-act="cal" aria-haspopup="dialog">${ic("cal")}${S.range?esc(rangeLabel(S.range)):"Date range"}</button></div>`;
+  if(!rows.length)return h+`<div class="none-msg">No extractions match${S.range?" this date range":" this filter"}.</div>`;
+  return h+`<div class="lv" role="list">`+rows.map(t=>{
+    const open=!!S.open[t.id],[md,y]=fmt(t.date).split(", ");
+    return `<article class="lr p-${t.p}${t.official?" official":""}${t.gone?" gone":""}" role="listitem">
+<div class="lr-main">
+  <time class="lr-date" datetime="${t.date}"><b>${md}</b><small>${y}</small></time>
+  <div class="lr-body"><div class="lr-t">${typeDD(t)}${mark(t)}<h3><button data-act="edit" data-id="${t.id}" title="Edit">${esc(t.title)}</button></h3></div>${summary(t)}</div>
+  <div class="lr-side">${pill(t)}${statusDD(t)}</div>
+  <div class="lr-end"><button class="kdots" data-act="menu" data-id="${t.id}" aria-label="More actions" aria-haspopup="true">···</button><span class="id">#${t.id}</span><button class="det" data-act="details" data-id="${t.id}" aria-expanded="${open}">${ic("down")}Details</button></div>
+</div>${open?detail(t,false):""}
+</article>`}).join("")+`</div>`;
 }
 
-/* ── Cards view ── */
-function cardsView(list){
-  if(!list.length)return `<div class="none-msg">No tasks match this filter.</div>`;
-  return P.map(p=>{
-    const items=list.filter(t=>t.p===p.k);
-    if(!items.length)return "";
-    return `<section class="grp"><div class="grp-h"><h2 class="${p.k==="critical"?"hot":""}">${esc(p.group)}</h2><span class="n">${items.length}</span><i></i></div>`+
-      items.map(t=>{
-        const open=!!S.open[t.id];
-        return `<article class="sig p-${t.p}${t.official?" official":""}">
-  <div class="sig-top">
-    <div class="sig-t"><span class="type">task</span><h3>${esc(t.title)}</h3></div>
-    <div class="acts">
-      <button class="btn" data-act="promote" data-id="${t.id}" ${t.canP&&!t.official?"":"disabled"}>${t.official?"Promoted":"Promote"}</button>
-      <button class="btn" data-act="dismiss" data-id="${t.id}" ${t.canD?"":"disabled"}>Dismiss</button>
-      <button class="btn dots" data-act="menu" data-id="${t.id}" aria-label="Move ${esc(t.title)}" aria-haspopup="true">···</button>
-    </div>
-  </div>
-  <p>${esc(t.desc)} <button class="more" data-act="details" data-id="${t.id}">(${open?"less":"more"})</button></p>
-  <div class="meta">${mark(t)}${pill(t)}<span>seen ${t.seen}</span></div>
-  ${open?`<dl class="dl"><div><dt>Priority row</dt><dd>${esc(p.name)}</dd></div><div><dt>Workflow status</dt><dd>${SM[t.s]}</dd></div><div><dt>Verification</dt><dd>${t.official?"Human verified":"AI suggested"}</dd></div><div><dt>First seen</dt><dd>${t.seen}</dd></div></dl>`:""}
-  <div class="sig-foot"><button class="det" data-act="details" data-id="${t.id}" aria-expanded="${open}">${ic("down")}Details</button><span class="id">#${t.id}</span></div>
-</article>`;}).join("")+`</section>`;
-  }).join("");
+/* ── Date range picker ── */
+const HAS=()=>new Set(T.filter(t=>!t.gone).map(t=>t.date));
+function calMonth(y,m,c,has){
+  const first=new Date(Date.UTC(y,m,1)).getUTCDay(),n=new Date(Date.UTC(y,m+1,0)).getUTCDate(),a=c.a,b=c.b||c.a;
+  let g="SMTWTFS".split("").map(d=>`<span class="wd">${d}</span>`).join("")+"<span></span>".repeat(first);
+  for(let d=1;d<=n;d++){const i=iso(y,m,d),cl=[i===a?"a":"",i===b?"b":"",a&&i>a&&i<b?"in":"",i===TODAY?"today":"",has.has(i)?"has":""].filter(Boolean).join(" ");
+    g+=`<button class="cd ${cl}" data-act="calday" data-d="${i}" aria-label="${fmt(i)}${has.has(i)?", has extractions":""}" aria-pressed="${i===a||i===b}">${d}</button>`}
+  return `<div class="cal-m"><h3>${MONTHS[m]} ${y}</h3><div class="cal-g">${g}</div></div>`;
+}
+function calRender(){
+  const c=S.cal;if(!c){$("#cal").innerHTML="";return}
+  const y2=c.m===11?c.y+1:c.y,m2=(c.m+1)%12,has=HAS();
+  const r=c.a?{from:c.a,to:c.b||c.a}:null,n=T.filter(t=>!t.gone&&inRange(t,r)).length;
+  const pre=[["7","Last 7 days"],["30","Last 30 days"],["90","Last 90 days"],["year","This year"]];
+  $("#cal").innerHTML=`<div class="scrim top" data-act="calcancel"></div>
+<section class="calm" role="dialog" aria-modal="true" aria-label="Filter by date range">
+  <div class="cal-h"><h2>Filter by date range</h2><button class="x" data-act="calcancel" aria-label="Close">${ic("x")}</button></div>
+  <div class="cal-pre">${pre.map(([k,l])=>`<button class="ch" data-act="calpre" data-n="${k}">${l}</button>`).join("")}</div>
+  <div class="cal-nav"><button data-act="calnav" data-d="-1" aria-label="Previous month">${ic("left")}</button><div class="cal-months">${calMonth(c.y,c.m,c,has)}${calMonth(y2,m2,c,has)}</div><button data-act="calnav" data-d="1" aria-label="Next month">${ic("right")}</button></div>
+  <div class="cal-key"><i></i>Days with extractions</div>
+  <div class="cal-f"><small>${r?`${esc(rangeLabel(r))} · ${n} extraction${n===1?"":"s"}`:"Pick a start date, then an end date."}${c.a&&!c.b?" Pick an end date, or apply for a single day.":""}</small><button class="btn" data-act="calclear">Clear</button><button class="btn" data-act="calcancel">Cancel</button><button class="btn hot" data-act="calapply" ${c.a?"":"disabled"}>Apply</button></div>
+</section>`;
+}
+function calOpen(){
+  const r=S.range,anchor=(r?r.to:[...HAS()].sort().pop()||TODAY).split("-").map(Number);
+  let y=anchor[0],m=anchor[1]-2;if(m<0){m+=12;y--}
+  S.cal={y,m,a:r?r.from:null,b:r?r.to:null};calRender();document.querySelector(".calm .x")?.focus();
 }
 
 /* ── Kanban view ── */
 function kanbanView(list){
-  let h=`<div class="kb-top"><span class="eyebrow">Workspace workflow</span><span class="kb-hint">Drag a card across columns to change its status, or across rows to change its priority.</span></div>
+  let h=`<div class="kb-top"><span class="eyebrow">Workspace workflow</span><span class="kb-hint">Drag a card across columns to change its status, or onto another row (open or collapsed) to change its priority. Pinned keeps a card handy without changing its priority.</span></div>
 <div class="track"><button data-act="pan" data-d="-1" id="pan-l" aria-label="Show previous columns">${ic("left")}</button><div class="t" role="scrollbar" aria-label="Board horizontal scroll position" aria-controls="board" aria-valuenow="0"><i id="thumb"></i></div><button data-act="pan" data-d="1" id="pan-r" aria-label="Show next columns">${ic("right")}</button></div>
 <div class="board" id="board" role="region" aria-label="Work status board by priority. Scroll horizontally to view additional columns." tabindex="0"><div class="board-in">
 <div class="cols">${ST.map(([k,n])=>`<div class="col-h"><h2>${n}</h2><span class="n">${list.filter(t=>t.s===k).length}</span></div>`).join("")}</div>`;
-  P.forEach(p=>{
-    const items=list.filter(t=>t.p===p.k),shut=!!S.shut[p.k];
+  LANES.forEach(p=>{
+    const items=list.filter(t=>rowOf(t)===p.k),shut=!!S.shut[p.k];
     h+=`<section class="lane lane-${p.k} p-${p.k}${shut?" shut":""}" aria-label="${p.name}">
-<div class="lane-head"><button class="lane-toggle" data-act="lane" data-k="${p.k}" aria-expanded="${!shut}">${ic("down")}<i class="lane-dot"></i><span class="lane-name">${p.name}</span><span class="lane-n">${items.length}</span><span class="lane-sev">${esc(p.sev)}</span></button><i class="lane-rule"></i></div>`;
+<div class="lane-head" data-p="${p.k}"><button class="lane-toggle" data-act="lane" data-k="${p.k}" aria-expanded="${!shut}">${ic("down")}<i class="lane-dot"></i><span class="lane-name">${p.name}</span><span class="lane-n">${items.length}</span><span class="lane-sev">${esc(p.sev)}</span></button><i class="lane-rule"></i></div>`;
     if(!shut)h+=`<div class="cells">${ST.map(([k,n])=>{
       const cs=items.filter(t=>t.s===k);
-      return `<div class="cell" data-p="${p.k}" data-s="${k}" aria-label="${p.name}, ${n}">${cs.length?cs.map(kcard).join(""):`<div class="empty">No items</div>`}</div>`;
+      return `<div class="cell" data-p="${p.k}" data-s="${k}" aria-label="${p.name}, ${n}">${cs.map(kcard).join("")}<button class="addc${cs.length?"":" solo"}" data-act="new" data-p="${p.k}" data-s="${k}" aria-label="Add a signal to ${p.name}, ${n}">${ic("plus")}<span class="lbl-add">Add signal</span>${cs.length?"":`<span class="lbl-none">No items</span>`}</button></div>`;
     }).join("")}</div>`;
     h+=`</section>`;
   });
-  return h+`</div></div>`;
+  const gone=T.filter(t=>t.gone&&t.kind===S.kind);
+  return h+`</div></div>
+<div class="tray${S.tray?" open":""}"><button class="tray-bar" data-act="tray" aria-expanded="${S.tray}">${ic("down")}<span class="lane-name">Dismissed</span><span class="lane-n">${gone.length}</span><span class="lane-sev">Off the board. Drop a card here to dismiss it.</span></button>${S.tray?`<div class="tray-list">${gone.length?gone.map(t=>`<div class="tr"><span class="type">${KM[t.kind][1]}</span><b>${esc(t.title)}</b><span class="tr-m">was ${SM[t.s]} · ${LM[rowOf(t)].name}</span><span class="id">#${t.id}</span><button class="btn" data-act="restore" data-id="${t.id}">Restore</button></div>`).join(""):`<div class="empty">Nothing dismissed</div>`}</div>`:""}</div>`;
 }
-const kcard=t=>`<article class="kc p-${t.p}${t.official?" official":""}" draggable="true" tabindex="0" role="button" data-act="open" data-id="${t.id}" aria-label="${esc(t.title)}. Open details">
-<div class="kc-top"><span class="type">task</span>${mark(t)}<span class="sp"></span>${ic("grip")}</div>
-<h3>${esc(t.title)}</h3><p>${esc(t.desc)}</p>
-<footer><span>seen ${t.seen}</span><span class="id">#${t.id}</span></footer></article>`;
+const kcard=t=>{const open=!!S.open[t.id];return `<article class="kc p-${t.p}${t.official?" official":""}" draggable="true" data-id="${t.id}">
+<div class="kc-top">${typeDD(t)}${mark(t)}<span class="sp"></span><button class="kdots" data-act="menu" data-id="${t.id}" aria-label="More actions" aria-haspopup="true">···</button>${ic("grip")}</div>
+<h3><button data-act="edit" data-id="${t.id}" title="Edit">${esc(t.title)}</button></h3>${summary(t)}
+<div class="meta">${t.pinned?`<span class="uprio p-${t.p}"><i class="lane-dot"></i>${PM[t.p].name}</span>`:""}<span>${t.manual?"created":"seen"} ${t.seen}</span></div>
+<footer><button class="det" data-act="details" data-id="${t.id}" aria-expanded="${open}">${ic("down")}Details</button><span class="id">#${t.id}</span></footer>
+${open?detail(t,true):""}</article>`};
 
-/* ── Drawer ── */
+/* ── Edit dialog (same one from both views) ── */
+function openEdit(t){
+  S.edit={id:t.id,d:{title:t.title,desc:t.desc,ctx:t.ctx,pi:t.pi,pa:t.pa,raci0:t.raci[0],raci1:t.raci[1],raci2:t.raci[2],raci3:t.raci[3]}};
+  drawer();document.getElementById("ed-title")?.focus();
+}
+// Manual creation: a draft record (id 0) sits behind the same dialog until it is saved.
+// From the header it defaults to Acknowledged / No priority; from a board cell it takes that cell's row and column.
+function openNew(row,s){
+  DRAFT={id:0,draft:true,manual:true,title:"",desc:"",ctx:"",p:row&&row!=="pinned"?row:"none",pinned:row==="pinned",s:s||"ack",seen:fmt(TODAY).split(",")[0],date:TODAY,canP:true,canD:true,kind:S.kind,official:false,edited:false,verified:true,gone:false,mem:[ME],chan:"Manual entry",conf:null,serial:"",raci:["—","—","—","—"],piC:null,pi:"",paC:null,pa:""};
+  S.edit={id:0,err:"",d:{title:"",desc:"",ctx:"",pi:"",pa:"",raci0:"",raci1:"",raci2:"",raci3:""}};
+  drawer();document.getElementById("ed-title")?.focus();
+}
 function drawer(){
-  const t=S.sel&&byId(S.sel);
-  if(!t||t.gone){$("#layer").innerHTML="";return}
-  $("#layer").innerHTML=`<div class="scrim" data-act="close"></div>
-<aside class="drawer" role="dialog" aria-label="Task details">
-  <div class="dr-top"><span class="type">task</span><span class="id">#${t.id}</span><span class="sp"></span><button class="x" data-act="close" aria-label="Close details">${ic("x")}</button></div>
-  <h2>${esc(t.title)}</h2><p>${esc(t.desc)}</p>
-  <div class="fld"><h6>Priority</h6><div class="chips">${P.map(p=>`<button class="ch p-${p.k}" data-act="setp" data-id="${t.id}" data-k="${p.k}" aria-pressed="${t.p===p.k}"><i class="lane-dot"></i>${p.name}</button>`).join("")}</div></div>
-  <div class="fld"><h6>Workflow status</h6><div class="chips">${ST.map(([k,n])=>`<button class="ch" data-act="sets" data-id="${t.id}" data-k="${k}" aria-pressed="${t.s===k}">${n}</button>`).join("")}</div></div>
-  <div class="dr-meta"><span>${mark(t)}${t.official?"Human verified":"AI suggested"}</span><span>${esc(PM[t.p].sev)}</span><span>seen ${t.seen}</span></div>
-  <div class="dr-acts"><button class="btn" data-act="promote" data-id="${t.id}" ${t.canP&&!t.official?"":"disabled"}>${t.official?"Promoted":"Promote"}</button><button class="btn" data-act="dismiss" data-id="${t.id}" ${t.canD?"":"disabled"}>Dismiss</button></div>
-</aside>`;
+  const e=S.edit,t=e&&byId(e.id);
+  if(!t||t.gone){S.edit=null;$("#layer").innerHTML="";return}
+  const d=e.d,nw=!!t.draft;
+  $("#layer").innerHTML=`<div class="scrim" data-act="cancel"></div>
+<section class="modal" role="dialog" aria-modal="true" aria-label="${nw?"New signal":"Edit #"+t.id}">
+  <header class="md-h">${typeDD(t)}<span class="id">${nw?"New signal":"#"+t.id}</span><span class="sp"></span><button class="x" data-act="cancel" aria-label="Close">${ic("x")}</button></header>
+  ${nw?"":`<div class="md-acts"><button class="btn hot" data-act="promote" data-id="${t.id}" ${t.canP&&!t.official?"":"disabled"}>${t.official?"Promoted":"Promote"}</button><span class="sp"></span><button class="btn dots" data-act="menu" data-id="${t.id}" aria-label="More actions" aria-haspopup="true">···</button></div>`}
+  <div class="md-body">
+    <div><input class="md-title" id="ed-title" data-f="title" value="${esc(d.title)}" placeholder="Title" aria-label="Title">${e.err?`<small class="err" role="alert">${esc(e.err)}</small>`:""}</div>
+    <div class="meta">${mark(t)}${pill(t)}<span>${t.manual?"created":"seen"} ${t.seen}, 2026</span><span class="inl">${ic(CI[t.chan]||"chat")}${esc(t.chan)}</span>${t.manual?"":`<span>${pct(t.conf)} confidence</span>`}</div>
+    <div class="md-row"><div><h6>Work status</h6><small>${nw?"Where the new signal lands on the board.":"Move this item between the six workflow phases."}</small></div>${statusDD(t)}</div>
+    <label><span class="h6">Summary</span><textarea id="ed-desc" data-f="desc" rows="3">${esc(d.desc)}</textarea>${t.manual?"":`<small>Editing marks this record Human edited. The AI original remains in version history.</small>`}</label>
+    <label><span class="h6">Full context</span><textarea id="ed-ctx" data-f="ctx" rows="${nw?3:5}">${esc(d.ctx)}</textarea><small>This is the detailed expansion shown from the item's (more) control.${t.manual?"":" Keep it grounded in the record sources."}</small></label>
+    <div><h6>Members</h6><p class="md-mem">${esc(t.mem.join(" / "))}</p></div>
+    <div class="md-grid">
+      <div><h6>RACI ${mark(t)}</h6><div class="raci">${RN.map((n,i)=>`<div><b>${n[0]}</b><dt>${n}</dt><input id="ed-raci${i}" data-f="raci${i}" value="${esc(d["raci"+i])}" placeholder="—" aria-label="${n}"></div>`).join("")}</div></div>
+      <label><span class="h6">Possible impact ${pct(t.piC)} ${mark(t)}</span><textarea id="ed-pi" data-f="pi" rows="${nw?3:5}">${esc(d.pi)}</textarea></label>
+      <label><span class="h6">Possible action ${pct(t.paC)} ${mark(t)}</span><textarea id="ed-pa" data-f="pa" rows="${nw?3:5}">${esc(d.pa)}</textarea></label>
+    </div>
+  </div>
+  <footer class="md-f"><small>${nw?`Created by you and marked Human verified. It lands in ${KM[t.kind][2]} · ${SM[t.s]} · ${LM[rowOf(t)].name}.`:t.manual?`Editing #${t.id} · created manually; your edit is attributed to the current user.`:`Editing #${t.id} · original by AI extractor; your edit is attributed to the current user.`}</small>${nw?"":`<button class="btn" data-act="stub" data-n="Version history">Version history</button>`}<button class="btn" data-act="cancel">Cancel</button><button class="btn hot" data-act="save">${nw?"Create signal":"Save changes"}</button></footer>
+</section>`;
 }
 
 /* ── Render ── */
 function render(){
   const list=visible(),b=$("#board"),pos=b?[b.scrollLeft,b.scrollTop]:null;
-  const off=T.filter(t=>t.official&&!t.gone).length,gone=T.filter(t=>t.gone).length;
-  $("#counts").innerHTML=`<b>${off} official</b> · ${TOTAL-off-gone} suggested`;
-  $("#inview").textContent=`${list.length} of ${TOTAL-gone} in view`;
+  const total=kindTotal(S.kind),off=T.filter(t=>t.official&&!t.gone&&t.kind===S.kind).length,mine=T.filter(t=>t.kind===S.kind&&!t.gone).length;
+  $("#kinds").innerHTML=KINDS.map(k=>`<button class="tab sub${k[0]===S.kind?" on":""}" data-act="tab" data-k="${k[0]}" ${k[0]===S.kind?'aria-current="true"':""}>${k[2]} <span class="badge">${kindTotal(k[0])}</span></button>`).join("");
+  $("#h1").textContent=KM[S.kind][2];
+  $("#counts").innerHTML=`<b>${off} official</b> · ${total-off} suggested`;
+  $("#inview").textContent=`${list.length} of ${total} in view`;
+  const kn=$("#kindnote");kn.hidden=mine>0;
+  kn.textContent=mine?"":`None of the sample records is a ${KM[S.kind][1].toLowerCase()} yet. Open Actions, change a card's type to ${KM[S.kind][1]}, and it moves here.`;
   $("#app").classList.toggle("kb",S.view==="kanban");
-  $("#v-cards").setAttribute("aria-pressed",S.view==="cards");
   $("#v-kanban").setAttribute("aria-pressed",S.view==="kanban");
-  $("#view").innerHTML=S.view==="kanban"?kanbanView(list):cardsView(list);
+  $("#v-list").setAttribute("aria-pressed",S.view==="list");
+  $("#rchip").innerHTML=S.range?`<span class="rchip">Seen ${esc(rangeLabel(S.range))}<button data-act="clearrange" aria-label="Clear date range">${ic("x")}</button></span>`:"";
+  $("#view").innerHTML=S.view==="kanban"?kanbanView(list):listView(list);
   const nb=$("#board");
   if(nb){if(pos){nb.scrollLeft=pos[0];nb.scrollTop=pos[1]}nb.addEventListener("scroll",thumb,{passive:true});thumb()}
   drawer();
@@ -551,21 +802,14 @@ function showPop(anchor,cls,html){
   pop.style.left=Math.max(12,x)+"px";pop.style.top=y+"px";
 }
 const hidePop=()=>{pop.hidden=true};
-function sevPop(a,t){
-  const p=PM[t.p],set=t.p!=="none";
-  const o=(ax,val,label)=>`<button class="opt${set&&p[ax]===val?" on":""}" data-act="axis" data-id="${t.id}" data-ax="${ax}" data-val="${val}">${label}</button>`;
-  showPop(a,"",`<h5>Severity · set both axes</h5><div class="axes"><div><h6>Urgency</h6>${o("u",1,"Urgent")}</div><div><h6>Impact</h6>${o("i",1,"High impact")}</div><div>${o("u",0,"Not urgent")}</div><div>${o("i",0,"Low impact")}</div></div><div class="cur">Current: <b>${esc(p.sev)}</b> → row <b>${p.name}</b></div>`);
-}
-function move(t,p,s,quiet){
-  const from={p:t.p,s:t.s};if(from.p===p&&from.s===s)return;
-  t.p=p;t.s=s;
-  const parts=[];if(from.s!==s)parts.push(SM[s]);if(from.p!==p)parts.push(PM[p].name);
-  if(!quiet)toast(`#${t.id} moved to ${parts.join(" · ")}`,()=>{t.p=from.p;t.s=from.s});
-  render();
-}
-function setView(v,push){
-  S.view=v==="cards"?"cards":"kanban";store.set("hs-view",S.view);
-  if(push){try{history.replaceState(null,"","#"+S.view)}catch(e){location.hash=S.view}}
+function dismiss(t){if(t.gone)return;t.gone=true;toast(`#${t.id} dismissed`,()=>{t.gone=false});render()}
+function move(t,row,s,quiet){
+  const from={p:t.p,s:t.s,pin:t.pinned},fr=rowOf(t);if(fr===row&&from.s===s)return;
+  if(row==="pinned")t.pinned=true;else{t.pinned=false;t.p=row}
+  t.s=s;
+  const parts=[];if(from.s!==s)parts.push(SM[s]);if(fr!==row)parts.push(LM[row].name);
+  if(t.draft){drawer();return}
+  if(!quiet)toast(`#${t.id} moved to ${parts.join(" · ")}`,()=>{t.p=from.p;t.s=from.s;t.pinned=from.pin});
   render();
 }
 
@@ -574,48 +818,73 @@ document.addEventListener("click",e=>{
   const a=e.target.closest("[data-act]");
   if(!a){if(!e.target.closest("#pop"))hidePop();return}
   const act=a.dataset.act,t=a.dataset.id?byId(a.dataset.id):null;
-  if(!a.closest("#pop")&&!["sev","menu","notes"].includes(act))hidePop();
+  if(!a.closest("#pop")&&!["prio","menu","status","kind","notes"].includes(act))hidePop();
   switch(act){
-    case"view":setView(a.dataset.v,true);break;
+    case"tab":S.kind=a.dataset.k;render();document.querySelector(".scroll").scrollTop=0;break;
+    case"kind":showPop(a,"menu",`<h6>Signal type</h6>`+KINDS.map(k=>`<button class="mi${t.kind===k[0]?" on":""}" data-act="setkind" data-id="${t.id}" data-k="${k[0]}">${k[1]}</button>`).join("")+(t.official||t.edited||t.verified?"":`<small class="pophint">Pick ${KM[t.kind][1]} again to confirm it and mark this record Human verified.</small>`));break;
+    case"setkind":{hidePop();if(t.draft){t.kind=a.dataset.k;drawer();break}const from=t.kind,to=a.dataset.k;
+      if(from===to){if(t.official||t.edited||t.verified){toast(`#${t.id} is already Human verified`);break}
+        t.verified=true;toast(`#${t.id} confirmed as ${from==="action"?"an":"a"} ${KM[to][1].toLowerCase()} and marked Human verified`,()=>{t.verified=false});render();break}t.kind=to;toast(`#${t.id} is now a ${KM[to][1].toLowerCase()} and sits under ${KM[to][2]}`,()=>{t.kind=from});render();break}
+    case"view":S.view=a.dataset.v==="list"?"list":"kanban";render();document.querySelector(".scroll").scrollTop=0;break;
+    case"sort":S.desc=!S.desc;render();break;
+    case"cal":calOpen();break;
+    case"calcancel":S.cal=null;calRender();break;
+    case"calnav":{const c=S.cal;c.m+=+a.dataset.d;if(c.m<0){c.m=11;c.y--}else if(c.m>11){c.m=0;c.y++}calRender();break}
+    case"calday":{const c=S.cal,d=a.dataset.d;if(!c.a||c.b){c.a=d;c.b=null}else if(d<c.a){c.b=c.a;c.a=d}else c.b=d;calRender();break}
+    case"calpre":{const c=S.cal,k=a.dataset.n;c.b=TODAY;c.a=k==="year"?"2026-01-01":shift(TODAY,1-(+k));const [y,m]=c.b.split("-").map(Number);c.y=m===1?y-1:y;c.m=m===1?11:m-2;calRender();break}
+    case"calclear":S.range=null;S.cal=null;calRender();render();break;
+    case"calapply":{const c=S.cal;S.range={from:c.a,to:c.b||c.a};S.cal=null;calRender();render();toast(`Showing extractions seen ${rangeLabel(S.range)}`);break}
+    case"clearrange":S.range=null;render();break;
     case"mini":{const m=$("#app").classList.toggle("mini");a.setAttribute("aria-label",m?"Expand sidebar":"Collapse sidebar");setTimeout(thumb,0);break}
-    case"stub":toast(`${a.dataset.n} is outside this prototype`);break;
+    case"stub":if(a.closest("#pop"))hidePop();toast(`${a.dataset.n} is outside this prototype`);break;
     case"sync":toast("Sync started. Prototype data stays as is.");break;
     case"filter":S.filter=!S.filter;$("#search").hidden=!S.filter;a.classList.toggle("on",S.filter);a.setAttribute("aria-expanded",S.filter);if(S.filter)$("#q").focus();else{S.q="";$("#q").value="";render()}break;
     case"lane":S.shut[a.dataset.k]=!S.shut[a.dataset.k];render();break;
     case"pan":{const b=$("#board"),step=parseFloat(getComputedStyle(b.querySelector(".col-h")).width)+12;b.scrollBy({left:step*a.dataset.d,behavior:"smooth"});break}
     case"details":S.open[t.id]=!S.open[t.id];render();break;
     case"promote":t.official=true;toast(`#${t.id} promoted to official`,()=>{t.official=false});render();break;
-    case"dismiss":t.gone=true;if(S.sel===t.id)S.sel=null;toast(`#${t.id} dismissed`,()=>{t.gone=false});render();break;
-    case"open":S.sel=t.id;drawer();document.querySelector(".drawer .x")?.focus();break;
-    case"close":S.sel=null;drawer();break;
-    case"setp":move(t,a.dataset.k,t.s);break;
-    case"sets":move(t,t.p,a.dataset.k);hidePop();break;
-    case"sev":e.stopPropagation();sevPop(a,t);break;
-    case"axis":{const cur=PM[t.p],u=a.dataset.ax==="u"?+a.dataset.val:(t.p==="none"?0:cur.u),i=a.dataset.ax==="i"?+a.dataset.val:(t.p==="none"?0:cur.i);
-      const np=P.find(p=>p.u===u&&p.i===i);hidePop();move(t,np.k,t.s);break}
-    case"menu":showPop(a,"menu",`<h6>Move to</h6>`+ST.map(([k,n])=>`<button class="mi${t.s===k?" on":""}" data-act="sets" data-id="${t.id}" data-k="${k}">${n}</button>`).join(""));break;
-    case"notes":showPop(a,"note",`<h5>Prototype notes</h5><p>Kanban rows come from the severity already on each task. No new field is needed.</p><table><tr><td>Critical</td><td>Urgent · High impact</td></tr><tr><td>High priority</td><td>Not urgent · High impact</td></tr><tr><td>Medium priority</td><td>Urgent · Low impact</td></tr><tr><td>Low priority</td><td>Not urgent · Low impact</td></tr><tr><td>No priority</td><td>Severity not set</td></tr></table><p>Columns reuse the Junkola workspace workflow. Task titles and severities are the 20 in the Me view. Workflow statuses, and the two tasks without a severity, are sample values.</p>`);break;
+    case"dismiss":t.gone=true;toast(`#${t.id} dismissed`,()=>{t.gone=false});render();break;
+    case"more":S.more[t.id]=!S.more[t.id];render();break;
+    case"edit":hidePop();openEdit(t);break;
+    case"cancel":S.edit=null;DRAFT=null;drawer();break;
+    case"new":openNew(a.dataset.p,a.dataset.s);break;
+    case"save":if(S.edit&&S.edit.id===0){const x=S.edit,r=DRAFT,d=x.d;
+      if(!d.title.trim()){x.err="Give the signal a title before creating it.";drawer();document.getElementById("ed-title")?.focus();break}
+      const id=Math.max(...T.map(t=>t.id))+1;
+      Object.assign(r,{id,draft:false,title:d.title.trim(),desc:d.desc.trim(),ctx:d.ctx,pi:d.pi,pa:d.pa,raci:[d.raci0,d.raci1,d.raci2,d.raci3].map(v=>v.trim()||"—")});
+      T.push(r);DRAFT=null;S.edit=null;S.shut[rowOf(r)]=false;S.kind=r.kind;
+      toast(`#${id} created in ${KM[r.kind][2]} · ${SM[r.s]} · ${LM[rowOf(r)].name}`,()=>{T.splice(T.indexOf(r),1)});render();break}
+    else{const x=S.edit,r=byId(x.id),d=x.d,old={title:r.title,desc:r.desc,ctx:r.ctx,pi:r.pi,pa:r.pa,raci:r.raci,edited:r.edited};
+      Object.assign(r,{title:d.title.trim()||r.title,desc:d.desc,ctx:d.ctx,pi:d.pi,pa:d.pa,raci:[d.raci0,d.raci1,d.raci2,d.raci3].map(v=>v.trim()||"—"),edited:true});
+      S.edit=null;toast(`#${r.id} saved and marked Human edited`,()=>Object.assign(r,old));render();break}
+    case"status":showPop(a,"menu",`<h6>Workflow status</h6>`+ST.map(([k,n])=>`<button class="mi${!t.gone&&t.s===k?" on":""}" data-act="sets" data-id="${t.id}" data-k="${k}">${n}</button>`).join("")+(t.draft?"":`<hr><button class="mi${t.gone?" on":""}" data-act="sets" data-id="${t.id}" data-k="dismissed">Dismissed</button>`));break;
+    case"sets":{hidePop();const k=a.dataset.k;if(k==="dismissed")dismiss(t);else if(t.gone){t.gone=false;t.s=k;toast(`#${t.id} restored to ${SM[k]}`,()=>{t.gone=true});render()}else move(t,rowOf(t),k);break}
+    case"restore":t.gone=false;toast(`#${t.id} restored to ${SM[t.s]} · ${LM[rowOf(t)].name}`,()=>{t.gone=true});render();break;
+    case"tray":S.tray=!S.tray;render();break;
+    case"showgone":S.showGone=!S.showGone;render();break;
+    case"prio":showPop(a,"menu",`<h6>Priority</h6>`+LANES.map(p=>`<button class="mi p-${p.k}${rowOf(t)===p.k?" on":""}" data-act="setp" data-id="${t.id}" data-k="${p.k}"><i class="lane-dot"></i>${p.name}</button>`).join(""));break;
+    case"pin":hidePop();move(t,t.pinned?t.p:"pinned",t.s);break;
+    case"setp":hidePop();move(t,a.dataset.k,t.s);break;
+    case"menu":showPop(a,"menu",`<button class="mi" data-act="pin" data-id="${t.id}">${t.pinned?"Unpin":"Pin"}</button><button class="mi" data-act="edit" data-id="${t.id}">Edit</button><button class="mi" data-act="stub" data-n="Snooze">Snooze</button><hr><button class="mi" data-act="stub" data-n="Open source">Open source ${ic("ext")}</button>`);break;
+    case"notes":showPop(a,"note",`<h5>Prototype notes</h5><p>Kanban rows come from the severity already on each task. No new field is needed.</p><table><tr><td>Pinned</td><td>Any priority, kept underneath</td></tr><tr><td>Critical</td><td>Urgent · High impact</td></tr><tr><td>High priority</td><td>Not urgent · High impact</td></tr><tr><td>Medium priority</td><td>Urgent · Low impact</td></tr><tr><td>Low priority</td><td>Not urgent · Low impact</td></tr><tr><td>No priority</td><td>Severity not set</td></tr></table><p>Columns reuse the Junkola workspace workflow. Task titles and severities are the 20 in the Me view. New signal (header button, or the + in any board cell) creates a record by hand: it is Human verified from the start, has no confidence score or source link, and its channel reads Manual entry. Dismissed is a workflow status, not a column: dismissed records leave the board and counts and wait in the Dismissed tray, where Restore returns them to their old column and row. Every sample record starts as an action. Changing a card's type moves it to that tab and updates the counts. Members, RACI, impact, action and full context are copied from the live cards. Workflow statuses, and the two tasks without a severity, are sample values.</p>`);break;
   }
 });
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){if(!pop.hidden)hidePop();else if(S.sel){S.sel=null;drawer()}}
+  if(e.key==="Escape"){if(!pop.hidden)hidePop();else if(S.cal){S.cal=null;calRender()}else if(S.edit){S.edit=null;DRAFT=null;drawer()}}
   if((e.key==="Enter"||e.key===" ")&&e.target.classList?.contains("kc")){e.preventDefault();e.target.click()}
 });
 $("#q").addEventListener("input",e=>{S.q=e.target.value;render()});
+document.addEventListener("input",e=>{const f=e.target.dataset?.f;if(f&&S.edit){S.edit.d[f]=e.target.value;if(f==="title"&&S.edit.err){S.edit.err="";document.querySelector(".modal .err")?.remove()}}});
 document.querySelector(".scroll").addEventListener("scroll",hidePop,{passive:true});
 
 // Drag and drop between cells: column sets status, row sets priority.
 let dragId=null;
 document.addEventListener("dragstart",e=>{const c=e.target.closest?.(".kc");if(!c)return;dragId=c.dataset.id;c.classList.add("drag");e.dataTransfer.effectAllowed="move";try{e.dataTransfer.setData("text/plain",dragId)}catch(x){}});
 document.addEventListener("dragend",()=>{dragId=null;document.querySelectorAll(".drag,.over").forEach(n=>n.classList.remove("drag","over"))});
-document.addEventListener("dragover",e=>{const c=e.target.closest?.(".cell");if(!c||!dragId)return;e.preventDefault();e.dataTransfer.dropEffect="move";
-  if(!c.classList.contains("over")){document.querySelectorAll(".cell.over").forEach(n=>n.classList.remove("over"));c.classList.add("over")}});
-document.addEventListener("drop",e=>{const c=e.target.closest?.(".cell");if(!c||!dragId)return;e.preventDefault();const t=byId(dragId);dragId=null;if(t)move(t,c.dataset.p,c.dataset.s)});
+document.addEventListener("dragover",e=>{const c=e.target.closest?.(".cell,.lane-head,.tray-bar");if(!c||!dragId)return;e.preventDefault();e.dataTransfer.dropEffect="move";
+  if(!c.classList.contains("over")){document.querySelectorAll(".over").forEach(n=>n.classList.remove("over"));c.classList.add("over")}});
+document.addEventListener("drop",e=>{const c=e.target.closest?.(".cell,.lane-head,.tray-bar");if(!c||!dragId)return;e.preventDefault();const t=byId(dragId);dragId=null;if(t){if(c.classList.contains("tray-bar"))dismiss(t);else move(t,c.dataset.p,c.dataset.s||t.s)}});
 
-function fromHash(){const h=location.hash.slice(1);if(h==="cards"||h==="kanban"){S.view=h;render()}}
-addEventListener("hashchange",fromHash);
-const h0=location.hash.slice(1),saved=store.get("hs-view");
-S.view=h0==="cards"||h0==="kanban"?h0:saved==="cards"?"cards":"kanban";
 if(innerWidth<760)$("#app").classList.add("mini");
 render();
 })();
