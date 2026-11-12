@@ -115,14 +115,14 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .hd .sp{flex:1}
 .gear{width:36px;height:36px;border-radius:7px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
 .gear:hover{border-color:var(--line-2)}
-.legend{display:flex;justify-content:flex-end;gap:12px;font-size:11px;color:var(--dim);margin-top:10px;min-height:17px}
+.legend{display:flex;justify-content:flex-end;gap:12px;font-size:11px;color:var(--dim);margin-top:10px;min-height:17px;margin-bottom:10px}
 .legend span{display:flex;align-items:center;gap:5px}
 .legend svg.ic{width:12px;height:12px}
 .c-green{color:var(--green)} .c-amber{color:var(--amber)}
 .search{margin-top:10px;display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--line-2);border-radius:7px;background:var(--surface);color:var(--muted);max-width:420px}
 .search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--fg);font:400 13px var(--font)}
 .search input::placeholder{color:var(--dim)}
-.active{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:14px 0 12px;min-height:22px}
+.active{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:0 0 10px;min-height:22px}
 .active .lb{font-weight:600;letter-spacing:.07em}
 .active .chip{border:1px solid var(--orange);color:var(--orange);font-weight:600;padding:1px 10px;border-radius:100px;line-height:18px}
 .active b{font-weight:600}
@@ -450,11 +450,7 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
           </div>
           <div class="legend"><span><svg class="ic c-green"><use href="#i-verified"/></svg>Human verified</span><span><svg class="ic c-amber"><use href="#i-spark"/></svg>AI suggested</span></div>
           <label class="search" id="search" hidden><svg class="ic"><use href="#i-filter"/></svg><input id="q" type="search" placeholder="Filter by title, text or #id" autocomplete="off"></label>
-          <div class="active">
-            <span class="lb">Active:</span><span class="chip">View: Me</span><b id="inview"></b><span>—</span><span>grouping and pins unchanged</span><span id="rchip"></span>
-            <span class="sp"></span>
-            <button class="notes" data-act="notes"><svg class="ic"><use href="#i-info"/></svg>Prototype notes</button>
-          </div>
+          <div class="active" id="activerow" hidden><span id="rchip"></span></div>
           <div id="kindnote" class="kindnote" hidden></div>
           <div id="view" style="display:contents"></div>
         </section>
@@ -693,8 +689,7 @@ function calOpen(){
 
 /* ── Kanban view ── */
 function kanbanView(list){
-  let h=`<div class="kb-top"><span class="eyebrow">Workspace workflow</span><span class="kb-hint">Drag a card across columns to change its status, or onto another row (open or collapsed) to change its priority. Pinned keeps a card handy without changing its priority.</span></div>
-<div class="track"><button data-act="pan" data-d="-1" id="pan-l" aria-label="Show previous columns">${ic("left")}</button><div class="t" role="scrollbar" aria-label="Board horizontal scroll position" aria-controls="board" aria-valuenow="0"><i id="thumb"></i></div><button data-act="pan" data-d="1" id="pan-r" aria-label="Show next columns">${ic("right")}</button></div>
+  let h=`<div class="track"><button data-act="pan" data-d="-1" id="pan-l" aria-label="Show previous columns">${ic("left")}</button><div class="t" role="scrollbar" aria-label="Board horizontal scroll position" aria-controls="board" aria-valuenow="0"><i id="thumb"></i></div><button data-act="pan" data-d="1" id="pan-r" aria-label="Show next columns">${ic("right")}</button></div>
 <div class="board" id="board" role="region" aria-label="Work status board by priority. Scroll horizontally to view additional columns." tabindex="0"><div class="board-in">
 <div class="cols">${ST.map(([k,n])=>`<div class="col-h"><h2>${n}</h2><span class="n">${list.filter(t=>t.s===k).length}</span></div>`).join("")}</div>`;
   LANES.forEach(p=>{
@@ -762,7 +757,7 @@ function render(){
   $("#kinds").innerHTML=KINDS.map(k=>`<button class="tab sub${k[0]===S.kind?" on":""}" data-act="tab" data-k="${k[0]}" ${k[0]===S.kind?'aria-current="true"':""}>${k[2]} <span class="badge">${kindTotal(k[0])}</span></button>`).join("");
   $("#h1").textContent=KM[S.kind][2];
   $("#counts").innerHTML=`<b>${off} official</b> · ${total-off} suggested`;
-  $("#inview").textContent=`${list.length} of ${total} in view`;
+  $("#activerow").hidden=!S.range;
   const kn=$("#kindnote");kn.hidden=mine>0;
   kn.textContent=mine?"":`None of the sample records is a ${KM[S.kind][1].toLowerCase()} yet. Open Actions, change a card's type to ${KM[S.kind][1]}, and it moves here.`;
   $("#app").classList.toggle("kb",S.view==="kanban");
