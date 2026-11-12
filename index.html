@@ -20,7 +20,7 @@
   --hot:linear-gradient(90deg,#e50602,#e53b02);
   --font:"Google Sans","Google Sans Text",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --col:300px;
+  --col:minmax(170px,1fr); --minw:1068px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -106,7 +106,7 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .filterbtn{width:40px;height:40px;flex:none;border-radius:9px;border:1px solid var(--line-2);background:var(--surface);color:var(--muted);display:grid;place-items:center}
 .filterbtn:hover,.filterbtn.on{color:var(--fg);border-color:var(--muted)}
 .body{flex:1;min-width:0}
-.app.kb .wrap{height:100%;padding-bottom:16px}
+.app.kb .wrap{height:100%;padding-bottom:16px;max-width:none}
 .app.kb .body{height:100%;display:flex;flex-direction:column;min-height:560px}
 
 .hd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-height:36px}
@@ -187,7 +187,7 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .track .t{flex:1;height:8px;border-radius:999px;background:var(--surface-3);position:relative;overflow:hidden}
 .track .t i{position:absolute;top:0;bottom:0;border-radius:999px;background:var(--line-2)}
 .board{flex:1;min-height:0;overflow:auto;border-radius:10px;scrollbar-width:thin;scrollbar-color:var(--line-2) transparent;overscroll-behavior:contain}
-.board-in{width:max-content;min-width:100%;padding-bottom:8px}
+.board-in{width:100%;min-width:var(--minw);padding-bottom:8px}
 .cols,.cells{display:grid;grid-template-columns:repeat(6,var(--col));gap:12px}
 .cols{position:sticky;top:0;z-index:3;background:#101011;padding-bottom:8px}
 .col-h{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(#232326,#19191b)}
@@ -257,7 +257,7 @@ svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .toast button{color:var(--orange);font-weight:700}
 
 @media (max-width:760px){
-  :root{--col:262px}
+  :root{--col:262px;--minw:max-content}
   .topbar,.bar{padding-left:16px;padding-right:16px}
   .wrap{padding:16px 16px 72px;gap:12px;flex-direction:column}
   .app.kb .wrap{height:auto} .app.kb .body{height:auto;width:100%} .body{width:100%}
@@ -526,6 +526,7 @@ function render(){
 function thumb(){
   const b=$("#board"),th=$("#thumb");if(!b||!th)return;
   const w=b.scrollWidth,c=b.clientWidth,x=b.scrollLeft;
+  th.closest(".track").hidden=w<=c+1;
   th.style.width=Math.min(100,c/w*100)+"%";th.style.left=(x/w*100)+"%";
   $("#pan-l").disabled=x<=1;$("#pan-r").disabled=x+c>=w-1;
 }
