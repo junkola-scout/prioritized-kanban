@@ -593,7 +593,7 @@ let DRAFT=null; // the unsaved record behind the "New signal" dialog
 const SAMPLE_N=T.length,ME="Scout Underwood";
 const byId=id=>+id===0?DRAFT:T.find(t=>t.id===+id);
 
-const S={tray:false,showGone:false,kind:"action",view:"kanban",desc:true,range:null,cal:null,q:"",shut:{medium:true,low:true,none:true},open:{},more:{},edit:null,filter:false};
+const S={tray:false,showGone:false,kind:"action",view:"kanban",desc:true,range:null,cal:null,q:"",shut:{critical:true,high:true,medium:true,low:true,none:true},open:{},more:{},edit:null,filter:false};
 
 /* ── Rail ── */
 const NAV=[
